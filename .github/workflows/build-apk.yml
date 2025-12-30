@@ -1,59 +1,85 @@
-name: Build and Release APK
+# Jai Ganeshaye namah
+# Om namah shivay
+name: Flutter Builder
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version name (e.g., 1.0.0)'
-        required: true
-        default: '1.0.0'
 
 jobs:
   build:
+    name: Build Flutter APK
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-      
-      - name: Get dependencies
+          flutter-version: "3.24.0"
+          channel: stable
+          cache: true
+
+      - name: Restore Cached Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            build/
+          key: flutter-deps-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: |
+            flutter-deps-
+
+      - name: Install Dependencies
         run: flutter pub get
-      
+        
       - name: Build APK
         run: flutter build apk --release
-      
-      - name: Rename APK
-        run: |
-          VERSION=${{ github.event.inputs.version || github.ref_name }}
-          VERSION=${VERSION#v}
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/kochi-metro-supervisor-${VERSION}.apk
-      
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: build/app/outputs/flutter-apk/*.apk
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Upload APK Artifact
+
+      - name: Rename APK with Version
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/kochi-metro-supervisor.v${{ github.run_number }}.apk
+
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/kochi-metro-supervisor.v${{ github.run_number }}.apk
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Built APK
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/
+
+      - name: Check for Changes
+        id: check_changes
+        run: echo "CHANGES=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v1.${{ github.run_number }}-${{ env.CHANGES }}"
+          name: "Release v1.${{ github.run_number }}-${{ env.CHANGES }}"
+          body: "🚇 New release of Kochi Metro Supervisor with latest changes."
+          files: build/app/outputs/flutter-apk/kochi-metro-supervisor.v${{ github.run_number }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
