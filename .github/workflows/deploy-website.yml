@@ -1,0 +1,61 @@
+name: Build and Deploy Website
+
+on:
+  # Trigger on push to main branch
+  push:
+    branches:
+      - main
+    paths:
+      - 'deployWeb/**'
+  
+  # Trigger when a new release is published
+  release:
+    types: [published]
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+# Sets permissions for GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Copy assets to deployWeb
+        run: |
+          mkdir -p deployWeb/assets
+          cp -r assets/*.png deployWeb/assets/ 2>/dev/null || echo "No PNG files to copy"
+          cp -r assets/icons deployWeb/assets/ 2>/dev/null || echo "No icons folder to copy"
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'deployWeb'
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
