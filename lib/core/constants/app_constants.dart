@@ -1,11 +1,13 @@
-/// Centralized application-wide constants
-/// Helps maintain consistency and avoid hard-coded values
 class AppConstants {
   // App Info
   static const String appName = 'Kochi Metro Supervisor';
 
   // API Configuration
   static const String baseUrl = 'https://kochi-metro-backend.onrender.com';
+
+  // API Endpoints
+  static const String loginEndpoint = '/auth/login';
+  static const String profileEndpoint = '/user/profile';
 
   // Storage Keys
   static const String authTokenKey = 'auth_token';
