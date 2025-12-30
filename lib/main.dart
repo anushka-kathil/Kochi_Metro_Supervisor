@@ -7,6 +7,9 @@ import 'core/routes/app_routes.dart';
 import 'core/bindings/initial_bindings.dart';
 import 'data/services/storage_service.dart';
 
+import 'core/constants/app_constants.dart';
+
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -37,7 +40,7 @@ class KochiMetroApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Kochi Metro Supervisor',
+      title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       initialRoute: AppRoutes.splash,
