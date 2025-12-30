@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter/services.dart';
-
 import 'package:get/get.dart';
 
 import 'core/theme/app_theme.dart';
-
 import 'core/routes/app_routes.dart';
-
 import 'core/bindings/initial_bindings.dart';
-
 import 'data/services/storage_service.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize storage service
+  await _initializeApp();
 
+  runApp(const KochiMetroApp());
+}
+
+/// Handles all app-level initializations
+Future<void> _initializeApp() async {
+  // Initialize local storage service
   await Get.putAsync(() => StorageService().init());
-  // Set system UI overlay style
 
+  // Configure system UI (status bar)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -27,7 +28,7 @@ void main() async {
     ),
   );
 
-  runApp(const KochiMetroApp());
+  debugPrint("App initialization completed successfully");
 }
 
 class KochiMetroApp extends StatelessWidget {
@@ -37,8 +38,8 @@ class KochiMetroApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Kochi Metro Supervisor',
-      theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       initialRoute: AppRoutes.splash,
       getPages: AppPages.routes,
       initialBinding: InitialBindings(),
